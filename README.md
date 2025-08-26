@@ -42,6 +42,9 @@ cd nestjs-event-manager
 # Install dependencies
 npm install
 
+# Install dependencies
+npm run build
+
 # Set up environment variables
 cp .env.example .env 
 ```
