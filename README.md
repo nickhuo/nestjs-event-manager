@@ -1,6 +1,6 @@
 # NestJS Event Manager
 
-A robust event management system built with NestJS, TypeORM, and TypeScript. This application provides comprehensive event scheduling, user management, and intelligent event merging capabilities.
+A event management system built with NestJS, TypeORM, and TypeScript. This application provides comprehensive event scheduling, user management, and intelligent event merging capabilities.
 
 ## 🚀 Features
 
@@ -11,7 +11,6 @@ A robust event management system built with NestJS, TypeORM, and TypeScript. Thi
 - **Database Support**: SQLite for development/testing, MySQL for production
 - **Comprehensive Testing**: Unit tests, integration tests, and E2E tests
 - **Data Seeding**: Automated test data generation with Faker.js
-- **Type Safety**: Full TypeScript implementation with strict type checking
 
 ## 📋 Table of Contents
 
@@ -43,8 +42,8 @@ cd nestjs-event-manager
 # Install dependencies
 npm install
 
-# Set up environment variables (optional for development)
-cp .env.example .env  # if available
+# Set up environment variables
+cp .env.example .env 
 ```
 
 ## 💾 Database Setup
@@ -106,7 +105,7 @@ curl -X POST http://localhost:3000/api/events \
     "startTime": "2024-01-15T14:00:00.000Z",
     "endTime": "2024-01-15T15:00:00.000Z",
     "status": "TODO",
-    "inviteeIds": ["8215bdf8-5bd0-4509-ba6a-fb4654cceb72","fc18c2be-16c4-4add-a67a-8045ef4e0b34"]
+    "inviteeIds": ["2e3a1420-0572-423f-b8c4-29ab3402d55d","f0c62620-5154-4d45-9ab6-b8eb2ce6e37d"]
   }'
 ```
 

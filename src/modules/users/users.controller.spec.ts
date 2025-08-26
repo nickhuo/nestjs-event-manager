@@ -62,6 +62,7 @@ describe('UsersController', () => {
 
       const result = await controller.mergeEvents('user-1');
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(service.mergeAllEvents).toHaveBeenCalledWith('user-1');
       expect(result).toEqual(mockMergeResponse);
     });
@@ -83,6 +84,7 @@ describe('UsersController', () => {
 
       const result = await controller.findById('user-1');
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(service.findById).toHaveBeenCalledWith('user-1');
       expect(result).toEqual(mockUser);
     });
@@ -95,6 +97,7 @@ describe('UsersController', () => {
 
       const result = await controller.findAll();
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(service.findAll).toHaveBeenCalled();
       expect(result).toEqual(mockUsers);
     });

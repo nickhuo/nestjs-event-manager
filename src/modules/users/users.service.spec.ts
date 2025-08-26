@@ -1,20 +1,50 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, type Repository } from 'typeorm';
 import { UsersService } from './users.service';
 import { Event, EventStatus } from '../../entities/event.entity';
 import { User } from '../../entities/user.entity';
 import { NotFoundException } from '@nestjs/common';
 
+// Type for accessing private methods in tests
+type UsersServiceWithPrivateMethods = {
+  eventsOverlap(event1: Event, event2: Event): boolean;
+  createMergedEvent(events: Event[]): Partial<Event>;
+};
+
 describe('UsersService', () => {
   let service: UsersService;
-  let eventRepository: jest.Mocked<Repository<Event>>;
   let userRepository: jest.Mocked<Repository<User>>;
   let dataSource: jest.Mocked<DataSource>;
 
   const mockUser: User = {
     id: 'user-1',
     name: 'Test User',
+    events: [],
+  };
+
+  // Additional mock users as invitees
+  const mockInvitee1: User = {
+    id: 'invitee-1',
+    name: 'Alice Johnson',
+    events: [],
+  };
+
+  const mockInvitee2: User = {
+    id: 'invitee-2',
+    name: 'Bob Wilson',
+    events: [],
+  };
+
+  const mockInvitee3: User = {
+    id: 'invitee-3',
+    name: 'Carol Davis',
+    events: [],
+  };
+
+  const mockInvitee4: User = {
+    id: 'invitee-4',
+    name: 'David Brown',
     events: [],
   };
 
@@ -25,7 +55,7 @@ describe('UsersService', () => {
     status: EventStatus.TODO,
     startTime: new Date('2024-01-01T14:00:00Z'),
     endTime: new Date('2024-01-01T15:00:00Z'),
-    invitees: [mockUser],
+    invitees: [mockUser, mockInvitee1, mockInvitee2],
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -37,19 +67,31 @@ describe('UsersService', () => {
     status: EventStatus.IN_PROGRESS,
     startTime: new Date('2024-01-01T14:45:00Z'),
     endTime: new Date('2024-01-01T16:00:00Z'),
-    invitees: [mockUser],
+    invitees: [mockUser, mockInvitee2, mockInvitee3],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const mockEvent3: Event = {
+    id: 'event-3',
+    title: 'Meeting C',
+    description: 'Third meeting',
+    status: EventStatus.COMPLETED,
+    startTime: new Date('2024-01-01T14:30:00Z'),
+    endTime: new Date('2024-01-01T15:30:00Z'),
+    invitees: [mockUser, mockInvitee3, mockInvitee4],
     createdAt: new Date(),
     updatedAt: new Date(),
   };
 
   const mockNonOverlappingEvent: Event = {
-    id: 'event-3',
-    title: 'Meeting C',
-    description: 'Third meeting',
+    id: 'event-4',
+    title: 'Meeting D',
+    description: 'Fourth meeting',
     status: EventStatus.COMPLETED,
     startTime: new Date('2024-01-01T17:00:00Z'),
     endTime: new Date('2024-01-01T18:00:00Z'),
-    invitees: [mockUser],
+    invitees: [mockUser, mockInvitee1],
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -90,7 +132,6 @@ describe('UsersService', () => {
     }).compile();
 
     service = module.get<UsersService>(UsersService);
-    eventRepository = module.get(getRepositoryToken(Event));
     userRepository = module.get(getRepositoryToken(User));
     dataSource = module.get(DataSource);
   });
@@ -185,7 +226,7 @@ describe('UsersService', () => {
         status: EventStatus.IN_PROGRESS,
         startTime: new Date('2024-01-01T14:00:00Z'),
         endTime: new Date('2024-01-01T16:00:00Z'),
-        invitees: [mockUser],
+        invitees: [mockUser, mockInvitee1, mockInvitee2, mockInvitee3],
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -196,6 +237,7 @@ describe('UsersService', () => {
           create: jest.fn().mockReturnValue(mergedEvent),
           save: jest.fn().mockResolvedValue(mergedEvent),
         };
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
         return await callback(mockManager);
       });
 
@@ -216,16 +258,110 @@ describe('UsersService', () => {
         'event-2',
       ]);
     });
+
+    it('should merge all three overlapping events with invitees correctly', async () => {
+      const userWithThreeOverlappingEvents = {
+        ...mockUser,
+        events: [mockEvent1, mockEvent2, mockEvent3],
+      };
+      userRepository.findOne.mockResolvedValue(userWithThreeOverlappingEvents);
+
+      // Expected merged event with all unique invitees
+      const mergedEvent = {
+        id: 'merged-event-1',
+        title: 'Meeting A + Meeting B + Meeting C',
+        description:
+          'Event 1: First meeting\n---\nEvent 2: Second meeting\n---\nEvent 3: Third meeting',
+        status: EventStatus.IN_PROGRESS, // Highest priority status
+        startTime: new Date('2024-01-01T14:00:00Z'), // Earliest start time
+        endTime: new Date('2024-01-01T16:00:00Z'), // Latest end time
+        invitees: [
+          mockUser,
+          mockInvitee1,
+          mockInvitee2,
+          mockInvitee3,
+          mockInvitee4,
+        ], // All unique invitees
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      dataSource.transaction.mockImplementation(async (callback: any) => {
+        const mockManager = {
+          remove: jest.fn(),
+          create: jest.fn().mockReturnValue(mergedEvent),
+          save: jest.fn().mockResolvedValue(mergedEvent),
+        };
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+        return await callback(mockManager);
+      });
+
+      const result = await service.mergeAllEvents('user-1');
+
+      expect(result.summary).toEqual({
+        originalEventCount: 3,
+        overlappingEventCount: 3,
+        overlappingGroups: 1,
+        mergedEventCount: 1,
+        remainingEventCount: 1,
+      });
+
+      expect(result.mergedEvents).toHaveLength(1);
+      expect(result.mergedEvents[0].title).toBe(
+        'Meeting A + Meeting B + Meeting C',
+      );
+      expect(result.mergedEvents[0].originalEventIds).toEqual([
+        'event-1',
+        'event-3',
+        'event-2',
+      ]);
+      expect(result.mergedEvents[0].inviteeCount).toBe(5); // All 5 unique invitees
+    });
+
+    it('should verify invitees deduplication when merging events', () => {
+      // The service should call private methods to merge events
+      // We test the private method directly to verify invitees deduplication
+      const serviceWithPrivates =
+        service as unknown as UsersServiceWithPrivateMethods;
+      const mergedEvent = serviceWithPrivates.createMergedEvent([
+        mockEvent1,
+        mockEvent2,
+        mockEvent3,
+      ]);
+
+      // Verify that invitees are properly deduplicated
+      expect(mergedEvent.invitees).toHaveLength(5); // mockUser, mockInvitee1, mockInvitee2, mockInvitee3, mockInvitee4
+
+      // Verify all expected invitees are present without duplicates
+      const inviteeIds =
+        mergedEvent.invitees?.map((invitee) => invitee.id) || [];
+      expect(inviteeIds).toContain('user-1');
+      expect(inviteeIds).toContain('invitee-1');
+      expect(inviteeIds).toContain('invitee-2');
+      expect(inviteeIds).toContain('invitee-3');
+      expect(inviteeIds).toContain('invitee-4');
+
+      // Ensure no duplicates
+      const uniqueIds = [...new Set(inviteeIds)];
+      expect(uniqueIds).toHaveLength(5);
+    });
   });
 
   describe('overlap detection algorithm', () => {
     it('should detect overlapping events correctly', () => {
-      const overlaps = (service as any).eventsOverlap(mockEvent1, mockEvent2);
+      const serviceWithPrivates =
+        service as unknown as UsersServiceWithPrivateMethods;
+      const overlaps = serviceWithPrivates.eventsOverlap(
+        mockEvent1,
+        mockEvent2,
+      );
       expect(overlaps).toBe(true);
     });
 
     it('should detect non-overlapping events correctly', () => {
-      const overlaps = (service as any).eventsOverlap(
+      const serviceWithPrivates =
+        service as unknown as UsersServiceWithPrivateMethods;
+      const overlaps = serviceWithPrivates.eventsOverlap(
         mockEvent1,
         mockNonOverlappingEvent,
       );
@@ -235,7 +371,9 @@ describe('UsersService', () => {
 
   describe('attribute merging', () => {
     it('should merge event attributes correctly', () => {
-      const mergedEvent = (service as any).createMergedEvent([
+      const serviceWithPrivates =
+        service as unknown as UsersServiceWithPrivateMethods;
+      const mergedEvent = serviceWithPrivates.createMergedEvent([
         mockEvent1,
         mockEvent2,
       ]);
@@ -247,6 +385,66 @@ describe('UsersService', () => {
       expect(mergedEvent.status).toBe(EventStatus.IN_PROGRESS); // Higher priority
       expect(mergedEvent.startTime).toEqual(new Date('2024-01-01T14:00:00Z')); // Earlier start
       expect(mergedEvent.endTime).toEqual(new Date('2024-01-01T16:00:00Z')); // Later end
+    });
+
+    it('should prioritize IN_PROGRESS status over TODO and COMPLETED', () => {
+      const serviceWithPrivates =
+        service as unknown as UsersServiceWithPrivateMethods;
+
+      // Test with IN_PROGRESS having highest priority
+      const mergedEventWithInProgress = serviceWithPrivates.createMergedEvent([
+        mockEvent1, // TODO
+        mockEvent2, // IN_PROGRESS
+        mockEvent3, // COMPLETED
+      ]);
+      expect(mergedEventWithInProgress.status).toBe(EventStatus.IN_PROGRESS);
+    });
+
+    it('should prioritize TODO status over COMPLETED when no IN_PROGRESS', () => {
+      const serviceWithPrivates =
+        service as unknown as UsersServiceWithPrivateMethods;
+
+      // Create events with only TODO and COMPLETED statuses
+      const todoEvent = { ...mockEvent1, status: EventStatus.TODO };
+      const completedEvent = { ...mockEvent3, status: EventStatus.COMPLETED };
+
+      const mergedEventTodoCompleted = serviceWithPrivates.createMergedEvent([
+        todoEvent,
+        completedEvent,
+      ]);
+      expect(mergedEventTodoCompleted.status).toBe(EventStatus.TODO);
+    });
+
+    it('should use COMPLETED status when all events are completed', () => {
+      const serviceWithPrivates =
+        service as unknown as UsersServiceWithPrivateMethods;
+
+      // Create events with only COMPLETED status
+      const completedEvent1 = { ...mockEvent1, status: EventStatus.COMPLETED };
+      const completedEvent2 = { ...mockEvent2, status: EventStatus.COMPLETED };
+
+      const mergedEventAllCompleted = serviceWithPrivates.createMergedEvent([
+        completedEvent1,
+        completedEvent2,
+      ]);
+      expect(mergedEventAllCompleted.status).toBe(EventStatus.COMPLETED);
+    });
+
+    it('should merge all three events and verify status priority order', () => {
+      const serviceWithPrivates =
+        service as unknown as UsersServiceWithPrivateMethods;
+
+      // Test all three events with different statuses
+      const mergedEvent = serviceWithPrivates.createMergedEvent([
+        mockEvent1, // TODO
+        mockEvent2, // IN_PROGRESS
+        mockEvent3, // COMPLETED
+      ]);
+
+      // Should prioritize IN_PROGRESS > TODO > COMPLETED
+      expect(mergedEvent.status).toBe(EventStatus.IN_PROGRESS);
+      expect(mergedEvent.title).toBe('Meeting A + Meeting B + Meeting C');
+      expect(mergedEvent.invitees).toHaveLength(5); // All unique invitees
     });
   });
 });

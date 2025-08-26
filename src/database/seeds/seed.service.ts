@@ -3,14 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import type { Repository } from 'typeorm';
 import { User } from '../../entities/user.entity';
 import { Event } from '../../entities/event.entity';
-import {
-  createRealisticUsers,
-  createManyUsers,
-} from '../factories/user.factory';
-import {
-  createRealisticEvents,
-  createManyEvents,
-} from '../factories/event.factory';
+import { createManyUsers } from '../factories/user.factory';
+import { createManyEvents } from '../factories/event.factory';
+import { seedUsers } from './data/users.seed';
+import { seedEvents } from './data/events.seed';
 
 @Injectable()
 export class SeedService {
@@ -70,8 +66,7 @@ export class SeedService {
   private async seedUsers(): Promise<void> {
     this.logger.log('Creating user data...');
 
-    const userData = createRealisticUsers();
-    const users = this.userRepository.create(userData);
+    const users = this.userRepository.create(seedUsers);
     await this.userRepository.save(users);
 
     this.logger.log(`Created ${users.length} users`);
@@ -80,8 +75,7 @@ export class SeedService {
   private async seedEvents(): Promise<void> {
     this.logger.log('Creating event data...');
 
-    const eventData = createRealisticEvents();
-    const events = this.eventRepository.create(eventData);
+    const events = this.eventRepository.create(seedEvents);
     await this.eventRepository.save(events);
 
     this.logger.log(`Created ${events.length} events`);
@@ -94,16 +88,56 @@ export class SeedService {
     const events = await this.eventRepository.find();
 
     for (const event of events) {
-      // Randomly assign 2-5 invitees to each event
-      const inviteeCount = Math.floor(Math.random() * 4) + 2; // 2-5
-      const shuffledUsers = [...users].sort(() => 0.5 - Math.random());
-      const selectedInvitees = shuffledUsers.slice(0, inviteeCount);
+      let selectedInvitees: User[] = [];
+
+      // Assign invitees based on event type
+      if (event.title.includes('Team') || event.title.includes('Sprint') || 
+          event.title.includes('Code Review') || event.title.includes('Architecture') ||
+          event.title.includes('Tech Sharing') || event.title.includes('Engineering')) {
+        // Tech/Engineering events: 3-6 people
+        const inviteeCount = Math.floor(Math.random() * 4) + 3; // 3-6
+        selectedInvitees = this.getRandomUsers(users, inviteeCount);
+      } else if (event.title.includes('Product') || event.title.includes('Client') || 
+                 event.title.includes('Customer') || event.title.includes('Roadmap')) {
+        // Product/Client events: 4-7 people
+        const inviteeCount = Math.floor(Math.random() * 4) + 4; // 4-7
+        selectedInvitees = this.getRandomUsers(users, inviteeCount);
+      } else if (event.title.includes('Kickoff') || event.title.includes('All Hands')) {
+        // Large meetings: 8-12 people
+        const inviteeCount = Math.floor(Math.random() * 5) + 8; // 8-12
+        selectedInvitees = this.getRandomUsers(users, inviteeCount);
+      } else if (event.title.includes('Workshop') || event.title.includes('Training') || 
+                 event.title.includes('Learning') || event.title.includes('Development')) {
+        // Training events: 5-8 people
+        const inviteeCount = Math.floor(Math.random() * 4) + 5; // 5-8
+        selectedInvitees = this.getRandomUsers(users, inviteeCount);
+      } else if (event.title.includes('Coffee') || event.title.includes('Lunch') || 
+                 event.title.includes('Happy Hour') || event.title.includes('Chat')) {
+        // Social events: 2-4 people
+        const inviteeCount = Math.floor(Math.random() * 3) + 2; // 2-4
+        selectedInvitees = this.getRandomUsers(users, inviteeCount);
+      } else if (event.title.includes('Design') || event.title.includes('Creative')) {
+        // Design events: 3-5 people
+        const inviteeCount = Math.floor(Math.random() * 3) + 3; // 3-5
+        selectedInvitees = this.getRandomUsers(users, inviteeCount);
+      } else {
+        // Default: random 3-6 people
+        const inviteeCount = Math.floor(Math.random() * 4) + 3; // 3-6
+        selectedInvitees = this.getRandomUsers(users, inviteeCount);
+      }
 
       event.invitees = selectedInvitees;
       await this.eventRepository.save(event);
+
+      this.logger.log(`Event "${event.title}" assigned ${selectedInvitees.length} invitees`);
     }
 
     this.logger.log('Event invitation relationships created');
+  }
+
+  private getRandomUsers(users: User[], count: number): User[] {
+    const shuffled = [...users].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, Math.min(count, users.length));
   }
 
   async seedUsersOnly(count: number = 10): Promise<void> {
