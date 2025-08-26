@@ -109,7 +109,7 @@ export class SeedService {
   async seedUsersOnly(count: number = 10): Promise<void> {
     this.logger.log(`Creating ${count} random users...`);
 
-    const userData = await createManyUsers(count);
+    const userData = createManyUsers(count);
     const users = this.userRepository.create(userData);
     await this.userRepository.save(users);
 
@@ -119,7 +119,7 @@ export class SeedService {
   async seedEventsOnly(count: number = 5): Promise<void> {
     this.logger.log(`Creating ${count} random events...`);
 
-    const eventData = await createManyEvents(count);
+    const eventData = createManyEvents(count);
     const events = this.eventRepository.create(eventData);
     await this.eventRepository.save(events);
 

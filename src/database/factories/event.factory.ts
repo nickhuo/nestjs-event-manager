@@ -11,34 +11,69 @@ export interface EventFactoryOptions {
   durationHours?: number;
 }
 
-export async function createEvent(
-  options: EventFactoryOptions = {},
-): Promise<Partial<Event>> {
-  const { faker } = await import('@faker-js/faker');
+export function createEvent(options: EventFactoryOptions = {}): Partial<Event> {
+  // Default to future date within next 30 days
+  const defaultStartTime = new Date();
+  defaultStartTime.setDate(
+    defaultStartTime.getDate() + Math.floor(Math.random() * 30) + 1,
+  );
+  defaultStartTime.setHours(9 + Math.floor(Math.random() * 8), 0, 0, 0); // 9-16:00
 
-  const startTime = options.startTime || faker.date.future();
+  const startTime = options.startTime || defaultStartTime;
   const durationHours =
-    options.durationHours || faker.number.int({ min: 1, max: 4 });
+    options.durationHours || Math.floor(Math.random() * 4) + 1; // 1-4 hours
   const endTime =
     options.endTime ||
     new Date(startTime.getTime() + durationHours * 60 * 60 * 1000);
 
+  // Default event titles
+  const defaultTitles = [
+    'Project Meeting',
+    'Team Sync',
+    'Planning Session',
+    'Review Meeting',
+    'Discussion',
+  ];
+
+  // Default descriptions
+  const defaultDescriptions = [
+    'Project discussion and planning session.',
+    'Team synchronization meeting to align on objectives.',
+    'Review meeting to discuss progress and next steps.',
+    'Planning session for upcoming deliverables.',
+    'Discussion meeting to resolve issues and make decisions.',
+  ];
+
+  // Random status selection
+  const statuses = [
+    EventStatus.TODO,
+    EventStatus.IN_PROGRESS,
+    EventStatus.COMPLETED,
+  ];
+  const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+
   return {
-    title: options.title || faker.lorem.words(3),
-    description: options.description || faker.lorem.sentence(),
-    status: options.status || faker.helpers.enumValue(EventStatus),
+    title:
+      options.title ||
+      defaultTitles[Math.floor(Math.random() * defaultTitles.length)],
+    description:
+      options.description ||
+      defaultDescriptions[
+        Math.floor(Math.random() * defaultDescriptions.length)
+      ],
+    status: options.status || randomStatus,
     startTime,
     endTime,
   };
 }
 
-export async function createManyEvents(
+export function createManyEvents(
   count: number,
   options: EventFactoryOptions = {},
-): Promise<Partial<Event>[]> {
+): Partial<Event>[] {
   const results: Partial<Event>[] = [];
   for (let i = 0; i < count; i++) {
-    results.push(await createEvent(options));
+    results.push(createEvent(options));
   }
   return results;
 }

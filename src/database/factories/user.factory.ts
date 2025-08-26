@@ -4,26 +4,34 @@ export interface UserFactoryOptions {
   name?: string;
 }
 
-export async function createUser(
-  options: UserFactoryOptions = {},
-): Promise<Partial<User>> {
+export function createUser(options: UserFactoryOptions = {}): Partial<User> {
   if (options.name) {
     return { name: options.name };
   }
 
-  const { faker } = await import('@faker-js/faker');
+  // Fallback to simple names if faker is not available
+  const defaultNames = [
+    'John Doe',
+    'Jane Smith',
+    'Michael Johnson',
+    'Emily Davis',
+    'David Wilson',
+  ];
+  const randomName =
+    defaultNames[Math.floor(Math.random() * defaultNames.length)];
+
   return {
-    name: faker.person.fullName(),
+    name: randomName,
   };
 }
 
-export async function createManyUsers(
+export function createManyUsers(
   count: number,
   options: UserFactoryOptions = {},
-): Promise<Partial<User>[]> {
+): Partial<User>[] {
   const results: Partial<User>[] = [];
   for (let i = 0; i < count; i++) {
-    results.push(await createUser(options));
+    results.push(createUser(options));
   }
   return results;
 }
