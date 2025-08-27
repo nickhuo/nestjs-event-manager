@@ -77,6 +77,9 @@ DB_NAME=event_manager
 # Start development server with hot reload
 npm run start:dev
 
+# or
+NODE_ENV=development npm run start:dev
+
 # The server will start on http://localhost:3000
 # API endpoints are available at http://localhost:3000/api/
 ```
