@@ -2,7 +2,7 @@
 
 A event management system built with NestJS, TypeORM, and TypeScript. This application provides comprehensive event scheduling, user management, and intelligent event merging capabilities.
 
-## 🚀 Features
+## Features
 
 - **Event Management**: Create, retrieve, and delete events with comprehensive scheduling
 - **User Management**: User registration and relationship management
@@ -12,7 +12,7 @@ A event management system built with NestJS, TypeORM, and TypeScript. This appli
 - **Comprehensive Testing**: Unit tests, integration tests, and E2E tests
 - **Data Seeding**: Automated test data generation with Faker.js
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Installation](#installation)
 - [Database Setup](#database-setup)
@@ -24,7 +24,7 @@ A event management system built with NestJS, TypeORM, and TypeScript. This appli
 - [Development](#development)
 - [Production Deployment](#production-deployment)
 
-## 🛠 Installation
+## Installation
 
 ### Prerequisites
 
@@ -49,7 +49,7 @@ npm run build
 cp .env.example .env 
 ```
 
-## 💾 Database Setup
+## Database Setup
 
 ### Development Environment
 The application automatically uses SQLite for development and testing:
@@ -71,7 +71,7 @@ DB_PASSWORD=your_password
 DB_NAME=event_manager
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 # Start development server with hot reload
@@ -94,11 +94,14 @@ npm run seed:clear         # Clear all data
 npm run seed:stats         # Show database statistics
 ```
 
-## 📚 API Documentation
+## API Documentation
 
 ### Events API
 
 #### Create Event
+
+To obtain a user ID, first query the users table or use the Users API to list all users and retrieve their IDs.
+
 ```bash
 curl -X POST http://localhost:3000/api/events \
   -H "Content-Type: application/json" \
@@ -108,7 +111,7 @@ curl -X POST http://localhost:3000/api/events \
     "startTime": "2024-01-15T14:00:00.000Z",
     "endTime": "2024-01-15T15:00:00.000Z",
     "status": "TODO",
-    "inviteeIds": ["2e3a1420-0572-423f-b8c4-29ab3402d55d","f0c62620-5154-4d45-9ab6-b8eb2ce6e37d"]
+    "inviteeIds": ["user-id-1","user-id-2"]
   }'
 ```
 
@@ -176,7 +179,7 @@ curl -X POST http://localhost:3000/api/users/{user-id}/merge-events
 }
 ```
 
-## 🗄 Data Models
+## Data Models
 
 ### Event Entity
 
@@ -206,7 +209,7 @@ curl -X POST http://localhost:3000/api/users/{user-id}/merge-events
 - **IN_PROGRESS**: Event is currently active
 - **COMPLETED**: Event has been finished
 
-## 🌱 Seed Data
+## Seed Data
 
 The application includes a comprehensive seeding system for development and testing:
 
@@ -240,7 +243,7 @@ The seeding system uses Faker.js to generate realistic test data:
 - **Relationships**: Random user-event associations
 - **Event Status**: Randomly distributed across TODO, IN_PROGRESS, COMPLETED
 
-## 🧪 Testing
+## Testing
 
 ### Unit Tests
 ```bash
@@ -263,7 +266,7 @@ npm run test:e2e
 ### Test Database
 Tests automatically use an in-memory SQLite database that's created and destroyed for each test suite, ensuring isolation and fast execution.
 
-## 🛠 Development
+## Development
 
 ### Development Server
 ```bash
@@ -297,7 +300,7 @@ The application uses different configurations based on `NODE_ENV`:
 - **test**: In-memory SQLite database 
 - **production**: MySQL database with optimized settings
 
-## 🚀 Production Deployment
+## Production Deployment
 
 ### Build for Production
 ```bash
@@ -335,7 +338,7 @@ GRANT ALL PRIVILEGES ON event_manager.* TO 'event_user'@'%';
 FLUSH PRIVILEGES;
 ```
 
-## 🏗 Architecture
+## Architecture
 
 ### Technology Stack
 - **Framework**: NestJS (Node.js framework)
@@ -369,7 +372,7 @@ src/
 └── main.ts            # Application entry point
 ```
 
-## 🔧 Event Merging Algorithm
+## Event Merging Algorithm
 
 The event merging feature uses a sophisticated algorithm to combine overlapping events:
 
@@ -378,7 +381,7 @@ The event merging feature uses a sophisticated algorithm to combine overlapping 
 2. **Detect Overlaps**: Identifies events with overlapping time periods
 3. **Merge Logic**: 
    - Combines time ranges (earliest start, latest end)
-   - Merges invitee lists (removes duplicates)
+   - Adds all invitees from the original events to the merged event (removes duplicates)
    - Concatenates titles and descriptions
    - Selects appropriate status (prioritizes IN_PROGRESS > TODO > COMPLETED)
 4. **Database Update**: Atomically removes old events and creates merged event
@@ -394,7 +397,7 @@ After Merge:
 - Merged Event: 2:00 PM - 4:00 PM (Invitees: John, Jane, Bob)
 ```
 
-## 📝 API Examples
+## API Examples
 
 ### Complete Workflow Example
 
@@ -427,29 +430,3 @@ curl -X POST http://localhost:3000/api/users/user-id-1/merge-events
 # 4. Verify the merge result
 curl -X GET http://localhost:3000/api/users/user-id-1
 ```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass (`npm run test`)
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-For questions and support:
-- Open an issue on GitHub
-- Check the [NestJS Documentation](https://docs.nestjs.com)
-- Review the TypeORM documentation for database questions
-
----
-
-**Built with ❤️ using NestJS and TypeScript**

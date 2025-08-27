@@ -1,8 +1,8 @@
 {
-  "name": "nest-typescript-starter",
+  "name": "nest-event-merger",
   "private": true,
   "version": "1.0.0",
-  "description": "Nest TypeScript starter repository",
+  "description": "A NestJS-based project for managing events and tasks with REST APIs. Supports event creation, retrieval, deletion, and advanced merging of overlapping events with user invitations.",
   "license": "MIT",
   "scripts": {
     "build": "nest build",

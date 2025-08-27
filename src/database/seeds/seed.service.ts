@@ -91,32 +91,55 @@ export class SeedService {
       let selectedInvitees: User[] = [];
 
       // Assign invitees based on event type
-      if (event.title.includes('Team') || event.title.includes('Sprint') || 
-          event.title.includes('Code Review') || event.title.includes('Architecture') ||
-          event.title.includes('Tech Sharing') || event.title.includes('Engineering')) {
+      if (
+        event.title.includes('Team') ||
+        event.title.includes('Sprint') ||
+        event.title.includes('Code Review') ||
+        event.title.includes('Architecture') ||
+        event.title.includes('Tech Sharing') ||
+        event.title.includes('Engineering')
+      ) {
         // Tech/Engineering events: 3-6 people
         const inviteeCount = Math.floor(Math.random() * 4) + 3; // 3-6
         selectedInvitees = this.getRandomUsers(users, inviteeCount);
-      } else if (event.title.includes('Product') || event.title.includes('Client') || 
-                 event.title.includes('Customer') || event.title.includes('Roadmap')) {
+      } else if (
+        event.title.includes('Product') ||
+        event.title.includes('Client') ||
+        event.title.includes('Customer') ||
+        event.title.includes('Roadmap')
+      ) {
         // Product/Client events: 4-7 people
         const inviteeCount = Math.floor(Math.random() * 4) + 4; // 4-7
         selectedInvitees = this.getRandomUsers(users, inviteeCount);
-      } else if (event.title.includes('Kickoff') || event.title.includes('All Hands')) {
+      } else if (
+        event.title.includes('Kickoff') ||
+        event.title.includes('All Hands')
+      ) {
         // Large meetings: 8-12 people
         const inviteeCount = Math.floor(Math.random() * 5) + 8; // 8-12
         selectedInvitees = this.getRandomUsers(users, inviteeCount);
-      } else if (event.title.includes('Workshop') || event.title.includes('Training') || 
-                 event.title.includes('Learning') || event.title.includes('Development')) {
+      } else if (
+        event.title.includes('Workshop') ||
+        event.title.includes('Training') ||
+        event.title.includes('Learning') ||
+        event.title.includes('Development')
+      ) {
         // Training events: 5-8 people
         const inviteeCount = Math.floor(Math.random() * 4) + 5; // 5-8
         selectedInvitees = this.getRandomUsers(users, inviteeCount);
-      } else if (event.title.includes('Coffee') || event.title.includes('Lunch') || 
-                 event.title.includes('Happy Hour') || event.title.includes('Chat')) {
+      } else if (
+        event.title.includes('Coffee') ||
+        event.title.includes('Lunch') ||
+        event.title.includes('Happy Hour') ||
+        event.title.includes('Chat')
+      ) {
         // Social events: 2-4 people
         const inviteeCount = Math.floor(Math.random() * 3) + 2; // 2-4
         selectedInvitees = this.getRandomUsers(users, inviteeCount);
-      } else if (event.title.includes('Design') || event.title.includes('Creative')) {
+      } else if (
+        event.title.includes('Design') ||
+        event.title.includes('Creative')
+      ) {
         // Design events: 3-5 people
         const inviteeCount = Math.floor(Math.random() * 3) + 3; // 3-5
         selectedInvitees = this.getRandomUsers(users, inviteeCount);
@@ -129,7 +152,9 @@ export class SeedService {
       event.invitees = selectedInvitees;
       await this.eventRepository.save(event);
 
-      this.logger.log(`Event "${event.title}" assigned ${selectedInvitees.length} invitees`);
+      this.logger.log(
+        `Event "${event.title}" assigned ${selectedInvitees.length} invitees`,
+      );
     }
 
     this.logger.log('Event invitation relationships created');
